@@ -1,0 +1,26 @@
+{
+  "name": "daap-request",
+  "version": "0.0.1",
+  "description": "DAAP request",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://github.com/roblan/daap-request",
+  "bugs": "https://github.com/roblan/daap-request/issues",
+  "keywords": [
+    "daap",
+    "dmap",
+    "itunes",
+    "forked-daap",
+    "remote"
+  ],
+  "author": {
+    "name": "Robert Lange",
+    "url": "https://github.com/roblan"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "daap-parser": "0.0.1"
+  }
+}
