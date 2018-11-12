@@ -2,30 +2,43 @@ const http = require('http');
 const parser = require('daap-parser');
 
 const isErrorStatusCode = status => status < 200 || status > 299;
-const mapParams = params => Object.keys(params || {}).map(key => [key, params[key]].join('=')).join('&');
+const mapParams = (params = {}) => Object.keys(params).map(key => [key, params[key]].join('=')).join('&');
+const shouldBeImage = path => [
+	'/ctrl-int/1/nowplayingartwork',
+].reduce((memo, imageUrl) => memo || path.startsWith(imageUrl), false);
 
-module.exports = function (options = {}) {
-	options = Object.assign({}, options, {
-		protocol: "http:",
-		path: options.path ? options.path + (options.path.includes('?') ? '&' : '?') + mapParams(options.query) : '/'
+module.exports = ({ query, path, ...rest }) => {
+	const options = Object.assign(rest, {
+		protocol: 'http:',
+		path: path ? path + (path.includes('?') ? '&' : '?') + mapParams(query) : '/',
 	});
-	delete options.query;
 
 	return new Promise((resolve, reject) => {
-		let rawData = [];
+		const rawData = [];
 
-		http.get(options, res => {
+		http.get(options, (res) => {
 			res.on('data', chunk => rawData.push(chunk));
 			res.on('end', () => {
 				let error = isErrorStatusCode(res.statusCode);
-					key = res.headers['content-type'] || '';
-					body = Buffer.concat(rawData);
+				let key = res.headers['content-type'] || '';
+				let body = Buffer.concat(rawData);
 
-				if(!key.startsWith('image/')) {
-					body = parser.parse(body);
-					key = Object.keys(body)[0];
-					body = body[key] || {};
-					error = error || isErrorStatusCode(body.mstt);
+				if (error && !body.length) {
+					reject([{
+						mstt: res.statusCode,
+						msts: res.statusMessage,
+					}, 'merr']);
+					return;
+				}
+
+				if (!key.startsWith('image/')) {
+					if (shouldBeImage(options.path)) {
+						error = true;
+					} else {
+						body = parser.parse(body);
+						[key, body = {}] = Object.entries(body)[0] || [];
+						error = error || isErrorStatusCode(body.mstt);
+					}
 				}
 
 				(error ? reject : resolve)([body, key]);
